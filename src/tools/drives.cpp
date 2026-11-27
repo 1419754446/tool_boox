@@ -11,16 +11,7 @@
 
 namespace tb {
 
-std::vector<std::wstring> FixedDriveRoots() {
-    std::vector<std::wstring> drives;
-    wchar_t buffer[512]{};
-    const DWORD length = GetLogicalDriveStringsW(static_cast<DWORD>(std::size(buffer) - 1), buffer);
-    if (length == 0) return drives;
-    for (const wchar_t* p = buffer; *p; p += wcslen(p) + 1) {
-        if (GetDriveTypeW(p) == DRIVE_FIXED) drives.emplace_back(p);
-    }
-    return drives;
-}
+// 固定盘枚举在 drive_roots.cpp 里单独实现，这里只做"整理成 JSON"和"注册命令"。
 
 std::string DrivesJson() {
     std::string json = "{\"drives\":[";

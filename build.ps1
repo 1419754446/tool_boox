@@ -1,6 +1,36 @@
+param(
+    # -Test：只编译并运行扫描逻辑的回归测试，不打包、不打扰正在运行的 Toolbox。
+    [switch]$Test
+)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $root
+
+$gxx = 'D:\SoftWare\msys64\ucrt64\bin\g++.exe'
+$windres = 'D:\SoftWare\msys64\ucrt64\bin\windres.exe'
+# cc1plus.exe / ld.exe 依赖同目录 DLL，必须让它们在 PATH 里，否则会静默失败（退出码 1、零输出）。
+$env:PATH = 'D:\SoftWare\msys64\ucrt64\bin;' + $env:PATH
+
+if ($Test) {
+    $out = Join-Path $root 'build'
+    New-Item -ItemType Directory -Force -Path $out | Out-Null
+    # 只链扫描与重复查找两条链路需要的实现文件：不需要 WebView2、不需要资源，
+    # 所以跑一次只要一两秒，适合每次改完扫描代码就执行。
+    $testSources = @(
+        (Join-Path $root 'tests\scan_tests.cpp'),
+        (Join-Path $root 'src\scanner.cpp'),
+        (Join-Path $root 'src\tasks.cpp'),
+        (Join-Path $root 'src\tools\drive_roots.cpp')
+    )
+    $testExe = Join-Path $out 'scan_tests.exe'
+    & $gxx '-std=c++20' '-O1' '-finput-charset=UTF-8' '-DUNICODE' '-D_UNICODE' `
+        '-Isrc' @testSources '-o' $testExe `
+        '-municode' '-lbcrypt' '-lrstrtmgr' '-lole32' '-luuid' '-lshell32' '-lshlwapi' '-ladvapi32' '-static'
+    if ($LASTEXITCODE -ne 0) { throw 'scan_tests build failed' }
+    & $testExe
+    if ($LASTEXITCODE -ne 0) { throw "scan_tests failed (exit $LASTEXITCODE)" }
+    exit 0
+}
 
 # A running Toolbox keeps the dist exe locked. Ask it to close gracefully and
 # fail the build if it refuses; never force-kill a user's running scans.
@@ -21,10 +51,6 @@ if ($running.Count -gt 0) {
     }
 }
 
-$gxx = 'D:\SoftWare\msys64\ucrt64\bin\g++.exe'
-$windres = 'D:\SoftWare\msys64\ucrt64\bin\windres.exe'
-# cc1plus.exe / ld.exe 依赖同目录 DLL，必须让它们在 PATH 里，否则会静默失败（退出码 1、零输出）。
-$env:PATH = 'D:\SoftWare\msys64\ucrt64\bin;' + $env:PATH
 $out = Join-Path $root 'build'
 $dist = Join-Path $root 'dist'
 New-Item -ItemType Directory -Force -Path $out, $dist | Out-Null
