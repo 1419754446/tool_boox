@@ -886,7 +886,7 @@ function videoState() {
 // ── 通用磁盘勾选：大文件扫描 / 重复文件 / 空文件夹共用同一份选择 ──────────
 // 三个工具都是"挑一个根目录扫"的模式，勾上全盘扫描后同样可以只挑某几块盘，
 // 选择结果存一份，在三个页面之间保持一致。
-const DRIVE_SCOPED_TOOLS = ['large-files', 'duplicates', 'empty-folders'];
+const DRIVE_SCOPED_TOOLS = ['large-files', 'duplicates', 'empty-folders', 'disk-checkup'];
 
 function driveScope() {
   if (!state.driveScope) {

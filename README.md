@@ -61,6 +61,32 @@ Delete / Enter / Esc`，表头复选框支持半选。
   改为真实数据目录；标题统一为「工具箱」。
 - 修正：`Esc` 在悬浮窗里不再跳回首页；快速文件搜索页可用；视频设置可折叠。
 
+## v0.5 改了什么（工程地基 + 磁盘体检）
+
+- **磁盘体检（新工具，第 17 个）**：一次跑完空文件夹、大文件、重复文件、临时文件，四张卡
+  各给数量与体积，底部汇成一句「预计可安全释放」。四步严格串行——后端同一时间只跑一个主
+  任务，上一步的 done 到了才发下一步，进度消息只改一行文本、不整页重绘。盘勾选直接复用
+  大文件/重复/空文件夹那一份记忆；点「查看明细」跳到对应工具时自动带上同样的盘。
+  实测只勾 D 盘：199 个空文件夹、38 个大文件占 7.61 GB、5 组重复可释放 117 MB、临时文件
+  457 MB，合计可安全释放 574 MB，全程约 3 秒。
+
+  ![磁盘体检待检查](docs/screenshots/checkup-before.png)
+
+  ![磁盘体检结果](docs/screenshots/checkup-result.png)
+- **版本号只有一个来源**：工程根 `version.txt`（形如 `0.5.0`），`build.ps1` 生成 `version.h`
+  与 `version_rc.h`，程序内版本、exe 属性、zip 文件名全从它来。侧栏那个版本号原先写死在
+  `index.html`，现在改成由原生 `appInfo` 上报后填充，不会再出现「界面上是旧版本」。
+- **前端拆块**：`web/app.js`（约 8000 行）拆成 `web/js/01-core.js … 09-checkup.js`，
+  `build.ps1` 按文件名前缀顺序拼接后内联进 HTML——产物仍是单文件 exe，运行时不多发请求。
+  改某个工具时只需要滚它所在的那一块。
+- **扫描回归测试**：`tests/scan_tests.cpp` 造一棵临时目录树，断言空目录识别（含"只由空目录
+  组成的父目录"）、大文件筛选与排序、重复文件归组（同大小不同内容不许归一组），20 条断言
+  几秒跑完。`build.ps1 -Test` 一键执行，不打扰正在运行的 Toolbox。
+- **盘符枚举独立成文件**：`FixedDriveRoots()` 挪到 `src/tools/drive_roots.cpp`，不再依赖命令
+  总线，测试因此只需链三个实现文件，而不是把整套工具层拖进来。
+- **工程进了 git**：`dist/`、`build/` 忽略，源码、文档、截图入库，每步改动可回退、可 diff。
+  换行统一成 LF（`.gitattributes`），Windows 端不会再出现"全文件假 diff"。
+
 ## v0.4 补了什么（对照表里的遗留缺口）
 
 - **扩展名勾选面板**：视频扫描设置里 24 个常见后缀可点选，手输任意后缀会变成额外
@@ -186,6 +212,15 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File .\build.ps1
 产物：`dist\Toolbox.exe`（约 5 MB，单文件）与同名 zip。
 换 MSYS2 路径时改 `build.ps1` 顶部的 `$gxx` / `$windres`。
 
+改完扫描/重复查找的代码，先跑一遍回归测试再打包：
+
+```powershell
+pwsh -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -Test
+```
+
+版本号只改 `version.txt` 一处（形如 `0.5.0`），构建时自动生成 `version.h` 与 `version_rc.h`，
+程序内版本、exe 属性、zip 文件名都会同步。
+
 ## 目录速览
 
 ```
@@ -219,6 +254,9 @@ docs/功能对照.md            三套原版与本版的逐项差异
 `scanProgress / largeScanDone` 这类老消息同名。
 
 ## 工具清单
+
+磁盘体检：一次跑完空文件夹、大文件、重复文件、临时文件，给出「预计可安全释放」的总账，
+每项都能跳到对应工具看明细并处理（见 `docs/screenshots/checkup-result.png`）。
 
 文件/磁盘：常用文件夹、视频整理（缩略图 + 时长/分辨率 + 内置预览 + CSV/HTML 报告）、大文件扫描、
 空文件夹清理、重复文件查找、磁盘空间分析、批量重命名、文件哈希校验、快速文件搜索、

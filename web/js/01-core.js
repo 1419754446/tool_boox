@@ -82,6 +82,10 @@ function icon(name, size = 18) {
 
 const TOOLS = [
   {
+    id: 'disk-checkup', name: '磁盘体检', desc: '一次跑完空目录、大文件、重复文件和临时文件，直接告诉你大概能腾出多少空间。',
+    category: 'disk', icon: 'shield', accent: 'emerald', status: 'ready', tags: ['磁盘', '体检', '清理'],
+  },
+  {
     id: 'folders', name: '常用文件夹', desc: '把每天要去的目录收进一份清单，点一下就打开，也能定位、复制路径。',
     category: 'file', icon: 'pin', accent: 'slate', status: 'ready', tags: ['快捷入口', '日常'],
   },
@@ -425,6 +429,15 @@ const state = {
     const value = Number(localStorage.getItem('toolsoft.zoom'));
     return Number.isFinite(value) && value >= 0.8 && value <= 1.5 ? value : 1;
   })(),
+  // 磁盘体检：四步串行扫描的中枢状态，跟各工具自己的 state 分开存，互不污染。
+  checkup: {
+    running: false,
+    index: 0,
+    stage: 'empty',
+    roots: [],
+    results: {},
+    cancelled: false,
+  },
 };
 
 /* A long task is usually a native bug or a stuck worker. Keep a UI-level

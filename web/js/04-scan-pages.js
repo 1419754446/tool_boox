@@ -1015,6 +1015,7 @@ function handleHostMessage(event) {
       }
       break;
     case 'dupDone':
+      if (checkupAdvance('dup', payload)) break;
       if (state.organizer.waitingDup) {
         state.organizer.waitingDup = false;
         state.organizer.ranRecheck = true;
@@ -1063,6 +1064,7 @@ function handleHostMessage(event) {
       handleHashDone(payload);
       break;
     case 'tempProgress':
+      if (state.checkup && state.checkup.running) onCheckupProgress(payload);
       state.temp.stats = payload;
       if (state.view === 'tool' && state.toolId === 'temp-cleaner') {
         const counts = $('#temp-counts');
@@ -1072,7 +1074,7 @@ function handleHostMessage(event) {
       }
       break;
     case 'tempDone':
-      handleTempDone(payload);
+      if (!checkupAdvance('temp', payload)) handleTempDone(payload);
       break;
     case 'folderList':
       handleFolderList(payload);
@@ -1108,13 +1110,14 @@ function handleHostMessage(event) {
       handleScreenshotsLissDone(payload);
       break;
     case 'scanProgress':
+      if (state.checkup && state.checkup.running) onCheckupProgress(payload);
       onScanProgress(payload);
       break;
     case 'scanDone':
-      handleScanDone(payload);
+      if (!checkupAdvance('large', payload)) handleScanDone(payload);
       break;
     case 'emptyDone':
-      handleEmptyDone(payload);
+      if (!checkupAdvance('empty', payload)) handleEmptyDone(payload);
       break;
     case 'scanError':
       state.scan.running = false;

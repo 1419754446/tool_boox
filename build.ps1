@@ -171,6 +171,8 @@ if ($zipFiles.Count -gt 0) {
 # Remove leftovers from older builds so the distribution folder stays clean.
 Remove-Item (Join-Path $dist 'Toolbox.cer') -ErrorAction SilentlyContinue
 Remove-Item (Join-Path $dist 'trust-cert.bat') -ErrorAction SilentlyContinue
+# app.log is written next to the exe at runtime; it is not a deliverable.
+Remove-Item (Join-Path $dist 'app.log') -ErrorAction SilentlyContinue
 
 Write-Host ''
 Write-Host "Built: $dist\Toolbox.exe"

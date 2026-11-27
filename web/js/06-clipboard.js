@@ -267,6 +267,16 @@ function bindEvents() {
       return;
     }
 
+    // 磁盘体检：开始 / 停止 / 跳到对应工具看明细（明细页会继承这份盘勾选）
+    const checkupBtn = event.target.closest('[data-checkup]');
+    if (checkupBtn) {
+      const what = checkupBtn.dataset.checkup;
+      if (what === 'start') startCheckup();
+      else if (what === 'stop') stopCheckup();
+      else if (what === 'go') gotoCheckupDetail(checkupBtn.dataset.tool);
+      return;
+    }
+
     // 通用盘符条（大文件 / 重复 / 空文件夹）：点击单个盘 -> 切换选中，右侧按钮 -> 全选/全不选
     const drivePick = event.target.closest('[data-drive-pick]');
     if (drivePick) {

@@ -124,6 +124,7 @@ function renderToolPageBody() {
   if (tool.id === 'file-organizer') return renderFileOrganizer(tool);
   if (tool.id === 'usb-eject') return renderUsb(tool);
   if (tool.id === 'screenshot') return renderScreenshot(tool);
+  if (tool.id === 'disk-checkup') return renderCheckup(tool);
   return renderSoon();
 }
 
