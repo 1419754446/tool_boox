@@ -9,3 +9,4 @@
 *.zip binary
 *.dll binary
 *.res binary
+*.lib binary
