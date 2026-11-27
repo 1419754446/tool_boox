@@ -47,6 +47,11 @@ private:
 
     bool EnsureWindow();
     void UpdateBounds();
+    // 尺寸一律按"窗口所在显示器"的 DPI 换算，而不是主屏 DPI：
+    // WebView2 内容就是按所在显示器 DPI 渲染的，两边基准必须一致。
+    int Dpi() const { return static_cast<int>(dpi_); }
+    int Scale(int value) const { return MulDiv(value, Dpi(), 96); }
+    void DefaultSize(const std::wstring& id, int* width, int* height) const;
     void Navigate();
     void FinishShow();
     void SaveState();
@@ -60,6 +65,8 @@ private:
     Microsoft::WRL::ComPtr<ICoreWebView2> webview_;
 
     HWND hwnd_ = nullptr;
+    // 当前窗口所在显示器的 DPI（96 为基准），WM_DPICHANGED 时更新。
+    UINT dpi_ = 96;
     std::wstring toolId_;
     std::wstring title_;
     std::wstring extraQuery_;

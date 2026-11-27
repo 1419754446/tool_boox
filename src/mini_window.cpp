@@ -45,38 +45,39 @@ const wchar_t* TitleFor(const std::wstring& id) {
     return L"工具箱";
 }
 
-int Dpi() {
+// 取"窗口所在显示器"的 DPI，而不是主屏 DPI（GetDpiForSystem）。
+// WebView2 的内容是按窗口实际所在显示器的 DPI 渲染的（它默认开启
+// ShouldDetectMonitorScaleChanges），所以原生这边也必须用同一个基准换算尺寸。
+// 否则同一份配置在两台缩放不同的电脑上会得到不同的视觉大小：内容按 150% 放大，
+// 窗口却按 100% 算，结果就是内容装不下、只剩一行，或下方多出一大片空白。
+UINT DpiOfWindow(HWND hwnd) {
+    if (hwnd) {
+        const UINT dpi = GetDpiForWindow(hwnd);
+        if (dpi) return dpi;
+    }
     const UINT dpi = GetDpiForSystem();
-    return dpi ? static_cast<int>(dpi) : 96;
+    return dpi ? dpi : 96;
 }
 
-int Scale(int value) { return MulDiv(value, Dpi(), 96); }
-
-void DefaultSizeFor(const std::wstring& id, int* width, int* height) {
-    if (id == L"launcher") {
-        *width = Scale(420);
-        *height = Scale(460);
-    } else if (id == L"folders") {
-        *width = Scale(320);
-        *height = Scale(360);
-    } else if (id == L"clipboard-history") {
-        *width = Scale(340);
-        *height = Scale(380);
-    } else if (id == L"quick-search") {
-        *width = Scale(470);
-        *height = Scale(420);
-    } else if (id == L"video-collector") {
-        *width = Scale(720);
-        *height = Scale(460);
-    } else if (id == L"video-preview") {
-        *width = Scale(760);
-        *height = Scale(480);
+// 取某块显示器的工作区。只用 SPI_GETWORKAREA 拿到的是主屏的边界，
+// 副屏上开窗时窗口会被按主屏范围夹回来，看起来像"自己跳回主屏"。
+void WorkAreaNear(HWND hwnd, const POINT* probe, RECT* work) {
+    HMONITOR monitor = nullptr;
+    if (hwnd) {
+        monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+    } else if (probe) {
+        monitor = MonitorFromPoint(*probe, MONITOR_DEFAULTTONEAREST);
     } else {
-        // 其余工具都用更紧凑的默认尺寸：悬浮窗是随手的浮层，不该一开就占满桌面。
-        // 真正打开后前端还会按内容高度 auto-fit 一次，这里只给一个不至于过大的起点。
-        *width = Scale(570);
-        *height = Scale(430);
+        POINT origin{0, 0};
+        monitor = MonitorFromPoint(origin, MONITOR_DEFAULTTONEAREST);
     }
+    MONITORINFO info{};
+    info.cbSize = sizeof(info);
+    if (monitor && GetMonitorInfoW(monitor, &info)) {
+        *work = info.rcWork;
+        return;
+    }
+    SystemParametersInfoW(SPI_GETWORKAREA, 0, work, 0);
 }
 
 std::wstring StateFile() { return tb::DataDir() + L"\\mini-state.ini"; }
@@ -184,6 +185,8 @@ MiniWindow::MiniWindow(App* app, ICoreWebView2Environment* environment, std::wst
     : app_(app), environment_(environment), toolId_(std::move(toolId)),
       extraQuery_(std::move(extraQuery)) {
     title_ = title.empty() ? std::wstring(L"工具箱 · ") + TitleFor(toolId_) : std::move(title);
+    // 先按系统 DPI 猜一个，EnsureWindow() 创建出窗口后会换成它所在显示器的真实 DPI。
+    dpi_ = static_cast<int>(DpiOfWindow(nullptr));
     LoadState();
 }
 
@@ -196,13 +199,50 @@ MiniWindow::~MiniWindow() {
     controller_.Reset();
 }
 
+void MiniWindow::DefaultSize(const std::wstring& id, int* width, int* height) const {
+    if (id == L"launcher") {
+        *width = Scale(420);
+        *height = Scale(460);
+    } else if (id == L"folders") {
+        *width = Scale(320);
+        *height = Scale(360);
+    } else if (id == L"clipboard-history") {
+        *width = Scale(340);
+        *height = Scale(380);
+    } else if (id == L"quick-search") {
+        *width = Scale(470);
+        *height = Scale(420);
+    } else if (id == L"video-collector") {
+        *width = Scale(720);
+        *height = Scale(460);
+    } else if (id == L"video-preview") {
+        *width = Scale(760);
+        *height = Scale(480);
+    } else {
+        // 其余工具都用更紧凑的默认尺寸：悬浮窗是随手的浮层，不该一开就占满桌面。
+        // 真正打开后前端还会按内容高度 auto-fit 一次，这里只给一个不至于过大的起点。
+        *width = Scale(570);
+        *height = Scale(430);
+    }
+}
+
 void MiniWindow::LoadState() {
     const std::wstring file = StateFile();
     const int x = GetPrivateProfileIntW(toolId_.c_str(), L"X", -999999, file.c_str());
     const int y = GetPrivateProfileIntW(toolId_.c_str(), L"Y", -999999, file.c_str());
     int w = GetPrivateProfileIntW(toolId_.c_str(), L"W", 0, file.c_str());
     int h = GetPrivateProfileIntW(toolId_.c_str(), L"H", 0, file.c_str());
-    if (w <= 0 || h <= 0) DefaultSizeFor(toolId_, &w, &h);
+    if (w <= 0 || h <= 0) {
+        DefaultSize(toolId_, &w, &h);
+    } else if (GetPrivateProfileIntW(toolId_.c_str(), L"UnitLogical", 0, file.c_str()) == 1) {
+        // 新格式：W/H 是 96 DPI 基准的逻辑尺寸，换算到当前显示器后，
+        // 同一份配置在任何缩放比例的电脑上打开都是相同视觉大小。
+        w = MulDiv(w, Dpi(), 96);
+        h = MulDiv(h, Dpi(), 96);
+    } else {
+        // 旧格式：W/H 是当时的物理像素，原样使用即可——它本来就是按那台
+        // 机器的 DPI 算出来的，再乘一次就翻倍了。
+    }
     width_ = w;
     height_ = h;
     expandedHeight_ = h;
@@ -215,7 +255,14 @@ void MiniWindow::LoadState() {
     lastProgramHeight_ = height_;
 
     RECT work{};
-    SystemParametersInfoW(SPI_GETWORKAREA, 0, &work, 0);
+    if (x == -999999 || y == -999999) {
+        WorkAreaNear(nullptr, nullptr, &work);
+    } else {
+        // 按上次的位置判断它落在哪块屏，用那块屏的工作区来夹尺寸，
+        // 而不是永远拿主屏的边界。
+        POINT probe{x, y};
+        WorkAreaNear(nullptr, &probe, &work);
+    }
     const int workW = work.right - work.left;
     const int workH = work.bottom - work.top;
     // 高 DPI 下默认尺寸可能超过可用桌面：先夹到工作区，避免窗口一半在屏幕外。
@@ -239,6 +286,11 @@ void MiniWindow::LoadState() {
 
 void MiniWindow::SaveState() {
     if (!hwnd_) return;
+    // 写盘用 96 DPI 基准的逻辑尺寸：物理像素除以当前 DPI 再乘 96。
+    // 这样窗口尺寸不再绑定"保存时那台电脑的缩放"，150% 机器上存的配置
+    // 拿到 100% 机器上打开，视觉大小还是同一个。
+    int saveW = width_;
+    int saveH = height_;
     if (!collapsed_) {
         RECT rect{};
         GetWindowRect(hwnd_, &rect);
@@ -251,17 +303,21 @@ void MiniWindow::SaveState() {
         width_ = client.right > 0 ? client.right : rect.right - rect.left;
         height_ = client.bottom > 0 ? client.bottom : rect.bottom - rect.top;
         expandedHeight_ = height_;
+        saveW = MulDiv(width_, 96, Dpi());
+        saveH = MulDiv(height_, 96, Dpi());
     }
     const std::wstring file = StateFile();
     WritePrivateProfileStringW(toolId_.c_str(), L"X", std::to_wstring(x_).c_str(), file.c_str());
     WritePrivateProfileStringW(toolId_.c_str(), L"Y", std::to_wstring(y_).c_str(), file.c_str());
-    WritePrivateProfileStringW(toolId_.c_str(), L"W", std::to_wstring(width_).c_str(), file.c_str());
-    WritePrivateProfileStringW(toolId_.c_str(), L"H", std::to_wstring(height_).c_str(),
+    WritePrivateProfileStringW(toolId_.c_str(), L"W", std::to_wstring(saveW).c_str(), file.c_str());
+    WritePrivateProfileStringW(toolId_.c_str(), L"H", std::to_wstring(saveH).c_str(),
                                file.c_str());
     WritePrivateProfileStringW(toolId_.c_str(), L"Pinned", pinned_ ? L"1" : L"0", file.c_str());
     WritePrivateProfileStringW(toolId_.c_str(), L"Collapsed", collapsed_ ? L"1" : L"0",
                                file.c_str());
     WritePrivateProfileStringW(toolId_.c_str(), L"FitH", autoFit_ ? L"1" : L"0", file.c_str());
+    // 标记尺寸单位，读的时候才知道要不要按当前 DPI 换算。
+    WritePrivateProfileStringW(toolId_.c_str(), L"UnitLogical", L"1", file.c_str());
 }
 
 bool MiniWindow::EnsureWindow() {
@@ -293,6 +349,24 @@ bool MiniWindow::EnsureWindow() {
     hwnd_ = CreateWindowExW(exStyle, kMiniClass, title_.c_str(), style, x_, y_, outerWidth,
                             outerHeight, nullptr, nullptr, GetModuleHandleW(nullptr), this);
     if (!hwnd_) return false;
+
+    // 窗口创建完才知道它落在哪块屏上（PerMonitorV2 下 GetDpiForWindow 直接给出
+    // 该显示器的 DPI）。宽度/高度此前是按系统 DPI 估的，若不一致就按真实 DPI
+    // 重算一次并重新定位，保证同一份配置在任何缩放的电脑上视觉尺寸一致。
+    const int actualDpi = static_cast<int>(DpiOfWindow(hwnd_));
+    if (actualDpi != Dpi()) {
+        const int logicalW = MulDiv(width_, 96, Dpi());
+        const int logicalH = MulDiv(height_, 96, Dpi());
+        dpi_ = actualDpi;
+        width_ = MulDiv(logicalW, dpi_, 96);
+        height_ = MulDiv(logicalH, dpi_, 96);
+        expandedWidth_ = width_;
+        expandedHeight_ = height_;
+        RECT fixFrame{0, 0, width_, height_};
+        AdjustWindowRectEx(&fixFrame, style, FALSE, exStyle);
+        SetWindowPos(hwnd_, nullptr, x_, y_, fixFrame.right - fixFrame.left,
+                     fixFrame.bottom - fixFrame.top, SWP_NOZORDER | SWP_NOACTIVATE);
+    }
 
     if (collapsed_) {
         expandedHeight_ = height_;
@@ -540,7 +614,7 @@ void MiniWindow::SnapToEdges() {
     RECT rect{};
     GetWindowRect(hwnd_, &rect);
     RECT work{};
-    SystemParametersInfoW(SPI_GETWORKAREA, 0, &work, 0);
+    WorkAreaNear(hwnd_, nullptr, &work);
     const int margin = Scale(18);
     int x = rect.left;
     int y = rect.top;
@@ -565,7 +639,7 @@ void MiniWindow::FitHeight(int cssHeight) {
     const int frameExtra = outer - clientH;
 
     RECT work{};
-    SystemParametersInfoW(SPI_GETWORKAREA, 0, &work, 0);
+    WorkAreaNear(hwnd_, nullptr, &work);
     const int workH = work.bottom - work.top;
     const int minOuter = Scale(120);
     const int maxOuter = std::max(minOuter, workH - Scale(48));
@@ -648,9 +722,19 @@ LRESULT MiniWindow::HandleMessage(UINT message, WPARAM wparam, LPARAM lparam) {
             return 0;
         case WM_DPICHANGED: {
             const RECT* suggested = reinterpret_cast<RECT*>(lparam);
+            const int newDpi = HIWORD(wparam) ? static_cast<int>(HIWORD(wparam))
+                                              : static_cast<int>(DpiOfWindow(hwnd_));
+            if (newDpi != Dpi()) dpi_ = newDpi;
             SetWindowPos(hwnd_, nullptr, suggested->left, suggested->top,
                          suggested->right - suggested->left, suggested->bottom - suggested->top,
                          SWP_NOZORDER | SWP_NOACTIVATE);
+            // WebView2 默认自己跟随显示器 DPI（ShouldDetectMonitorScaleChanges 为
+            // true），这里不能再改 ZoomFactor，否则会按 dpi 比例放大两次。
+            // 只需要把新的客户区尺寸同步给它，并记下当前物理尺寸供 SaveState 用。
+            RECT client{};
+            GetClientRect(hwnd_, &client);
+            width_ = client.right - client.left;
+            height_ = client.bottom - client.top;
             UpdateBounds();
             return 0;
         }
