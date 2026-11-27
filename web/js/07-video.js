@@ -452,7 +452,7 @@ function renderFolderRow(item, index) {
       <td class="col-actions">
         <div class="row-actions">
           <button class="row-btn" data-folder-action="open" data-path="${path}" title="打开文件夹">${icon('external', 13)}</button>
-          <button class="row-btn" data-folder-action="reveal" data-path="${path}" title="在资源管理器中定位">${icon('search', 13)}</button>
+          <button class="row-btn" data-folder-action="reveal" data-path="${path}" title="在资源管理器中定位">${icon('folder-open', 13)}</button>
           <button class="row-btn" data-folder-action="copy" data-path="${path}" title="复制路径">${icon('copy', 13)}</button>
           <button class="row-btn" data-folder-action="edit" data-path="${path}" title="编辑">${icon('edit', 13)}</button>
           <button class="row-btn" data-folder-action="up" data-path="${path}" title="上移" ${index === 0 ? 'disabled' : ''}>${icon('arrow-up', 13)}</button>

@@ -575,6 +575,16 @@ function toolCall(cmd, args = {}, timeoutMs = 30000) {
   });
 }
 
+// 结果列表里的"跳转"统一走这里：在资源管理器里打开所在目录并选中该项。
+// 路径常常带中文和空格，拼命令行容易被引号打断，所以整条路径交给原生
+// ShellExecute 处理，前端只透传。
+function revealPath(path) {
+  if (!path) return;
+  toolCall('file.reveal', { path })
+    .then(() => toast('已在资源管理器中定位'))
+    .catch(() => toast('定位失败，路径可能已被移动', 'error'));
+}
+
 function b64ToBytes(b64) {
   const binary = atob(b64);
   const bytes = new Uint8Array(binary.length);

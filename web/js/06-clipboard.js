@@ -324,7 +324,9 @@ function bindEvents() {
     const action = event.target.closest('[data-action]');
     if (action) {
       const index = Number(action.dataset.index);
-      if (action.dataset.action === 'copy-path') {
+      if (action.dataset.action === 'reveal') {
+        revealPath(action.dataset.path);
+      } else if (action.dataset.action === 'copy-path') {
         copyPath(action.dataset.path);
       } else if (action.dataset.action === 'delete') {
         const item = state.scan.items[index];

@@ -314,6 +314,7 @@ function renderSpaceResults() {
             <div class="space-bar"><span style="width:${percent}%"></span></div>
             <span class="space-size">${formatBytes(entry.size)}</span>
             <span class="space-pct">${percent.toFixed(percent >= 10 ? 0 : 1)}%</span>
+            <button class="row-btn" data-action="reveal" data-path="${escapeHtml(entry.path)}" title="在资源管理器中定位">${icon('folder-open', 13)}</button>
             <button class="row-btn" data-action="copy-path" data-path="${escapeHtml(entry.path)}" title="复制完整路径">${icon('copy', 13)}</button>
             <span class="space-arrow">${entry.isDir ? icon('chevron-right', 14) : ''}</span>
           </div>`;
@@ -559,6 +560,7 @@ function renderHashResults() {
                 <td class="col-actions">
                   <div class="row-actions">
                     <button class="row-btn" data-action="copy-hash" data-hash="${escapeHtml(item.hash)}" title="复制哈希">${icon('copy', 13)}</button>
+                    <button class="row-btn" data-action="reveal" data-path="${escapeHtml(item.path)}" title="在资源管理器中定位">${icon('folder-open', 13)}</button>
                     <button class="row-btn" data-action="copy-path" data-path="${escapeHtml(item.path)}" title="复制完整路径">${icon('copy', 13)}</button>
                   </div>
                 </td>
@@ -648,7 +650,7 @@ function renderTempResults() {
       ${temp.truncated ? `<p class="fin-note">临时文件超过 4000 条，仅列出前 4000 条；建议分批清理。</p>` : ''}
       <div class="table-wrap">
         <table>
-          <thead><tr><th class="col-check"></th><th class="sortable" data-sort-scope="temp" data-sort-key="name" title="点击按名称排序">文件${sortMarkOf('temp', 'name')}</th><th class="sortable" data-sort-scope="temp" data-sort-key="category" title="点击按分类排序">分类${sortMarkOf('temp', 'category')}</th><th class="col-size sortable" data-sort-scope="temp" data-sort-key="size" title="点击按体积排序">大小${sortMarkOf('temp', 'size')}</th><th class="col-time sortable" data-sort-scope="temp" data-sort-key="mtime" title="点击按修改时间排序">修改时间${sortMarkOf('temp', 'mtime')}</th></tr></thead>
+          <thead><tr><th class="col-check"></th><th class="sortable" data-sort-scope="temp" data-sort-key="name" title="点击按名称排序">文件${sortMarkOf('temp', 'name')}</th><th class="sortable" data-sort-scope="temp" data-sort-key="category" title="点击按分类排序">分类${sortMarkOf('temp', 'category')}</th><th class="col-size sortable" data-sort-scope="temp" data-sort-key="size" title="点击按体积排序">大小${sortMarkOf('temp', 'size')}</th><th class="col-time sortable" data-sort-scope="temp" data-sort-key="mtime" title="点击按修改时间排序">修改时间${sortMarkOf('temp', 'mtime')}</th><th class="col-actions"></th></tr></thead>
           <tbody>
             ${visible.map((entry, index) => `
               <tr>
@@ -662,6 +664,12 @@ function renderTempResults() {
                 <td><span class="tag-plain">${escapeHtml(entry.category)}</span></td>
                 <td class="size-cell">${formatBytes(entry.size)}</td>
                 <td class="time-cell">${formatDate(entry.mtime)}</td>
+                <td class="col-actions">
+                  <div class="row-actions">
+                    <button class="row-btn" data-action="reveal" data-path="${escapeHtml(entry.path)}" title="在资源管理器中定位">${icon('folder-open', 13)}</button>
+                    <button class="row-btn" data-action="copy-path" data-path="${escapeHtml(entry.path)}" title="复制完整路径">${icon('copy', 13)}</button>
+                  </div>
+                </td>
               </tr>`).join('')}
           </tbody>
         </table>

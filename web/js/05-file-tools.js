@@ -622,7 +622,7 @@ function renderSearchResults() {
           </div>
           <div class="search-file-actions">
             <button class="row-btn" data-search-action="open" data-path="${path}" title="打开">${icon('play', 12)}</button>
-            <button class="row-btn" data-search-action="reveal" data-path="${path}" title="定位">${icon('search', 12)}</button>
+            <button class="row-btn" data-search-action="reveal" data-path="${path}" title="在资源管理器中定位">${icon('folder-open', 12)}</button>
             <button class="row-btn" data-search-action="copy" data-path="${path}" title="复制路径">${icon('copy', 12)}</button>
           </div>
         </div>`;

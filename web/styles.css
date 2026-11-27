@@ -3906,6 +3906,7 @@ html.no-anim thead th {
 .org-preview-table .org-col-status { width: 40px; }
 .org-preview-table .org-col-name { width: 28%; }
 .org-preview-table .org-col-rule { width: 110px; }
+.org-preview-table .org-col-actions { width: 44px; }
 .org-preview-table .file-name,
 .org-preview-table .file-parent { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 

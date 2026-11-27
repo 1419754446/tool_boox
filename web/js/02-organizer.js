@@ -431,6 +431,7 @@ function renderFileRow(item, index, selected) {
       <td class="time-cell">${formatDate(item.mtime)}</td>
       <td class="col-actions">
         <div class="row-actions">
+          <button class="row-btn" data-action="reveal" data-path="${escapeHtml(item.path)}" title="在资源管理器中定位">${icon('folder-open', 13)}</button>
           <button class="row-btn" data-action="copy-path" data-path="${escapeHtml(item.path)}" title="复制完整路径">${icon('copy', 13)}</button>
           <button class="row-btn danger" data-action="delete" data-index="${index}" title="移到回收站">${icon('trash', 13)}</button>
         </div>
@@ -558,6 +559,7 @@ function renderEmptyResults() {
                 </td>
                 <td class="col-actions">
                   <div class="row-actions">
+                    <button class="row-btn" data-action="reveal" data-path="${escapeHtml(path)}" title="在资源管理器中定位">${icon('folder-open', 13)}</button>
                     <button class="row-btn" data-action="copy-path" data-path="${escapeHtml(path)}" title="复制完整路径">${icon('copy', 13)}</button>
                     <button class="row-btn danger" data-action="delete-empty" data-index="${index}" title="移到回收站">${icon('trash', 13)}</button>
                   </div>
@@ -703,6 +705,7 @@ function renderDupResults() {
                     <div class="file-parent" title="${escapeHtml(file.path)}">${escapeHtml(file.path)}</div>
                   </div>
                   <span class="dup-time">${formatDate(file.mtime)}</span>
+                  <button class="row-btn" data-action="reveal" data-path="${escapeHtml(file.path)}" title="在资源管理器中定位">${icon('folder-open', 13)}</button>
                   <button class="row-btn" data-action="copy-path" data-path="${escapeHtml(file.path)}" title="复制完整路径">${icon('copy', 13)}</button>
                 </div>`;
             }).join('')}
@@ -861,8 +864,9 @@ function renderOrganizerPreview() {
           <colgroup>
             <col class="org-col-status"><col class="org-col-name">
             <col class="org-col-target"><col class="org-col-rule">
+            <col class="org-col-actions">
           </colgroup>
-          <thead><tr><th></th><th>原文件</th><th>目标</th><th>规则</th></tr></thead>
+          <thead><tr><th></th><th>原文件</th><th>目标</th><th>规则</th><th></th></tr></thead>
           <tbody>
             ${o.previewItems.map((it) => `
               <tr>
@@ -874,6 +878,11 @@ function renderOrganizerPreview() {
                 <td class="file-name" title="${escapeHtml(it.from)}">${escapeHtml(baseName(it.from))}</td>
                 <td class="file-parent" title="${escapeHtml(it.to)}">${escapeHtml(it.to)}</td>
                 <td><span class="tag-plain">${escapeHtml(it.rule)}</span></td>
+                <td class="col-actions">
+                  <div class="row-actions">
+                    <button class="row-btn" data-action="reveal" data-path="${escapeHtml(it.from)}" title="在资源管理器中定位">${icon('folder-open', 13)}</button>
+                  </div>
+                </td>
               </tr>`).join('')}
           </tbody>
         </table>
@@ -929,7 +938,7 @@ function renderOrganizerResults() {
       ${o.truncated ? '<p class="fin-note">文件过多，仅显示前一部分；请分批整理。</p>' : ''}
       <div class="table-wrap">
         <table>
-          <thead><tr><th></th><th>原文件</th><th>移动到</th><th>规则</th></tr></thead>
+          <thead><tr><th></th><th>原文件</th><th>移动到</th><th>规则</th><th class="col-actions"></th></tr></thead>
           <tbody>
             ${o.items.map((it) => `
               <tr>
@@ -941,6 +950,11 @@ function renderOrganizerResults() {
                 <td class="file-name">${escapeHtml(baseName(it.from))}</td>
                 <td class="file-parent" title="${escapeHtml(it.to)}">${escapeHtml(it.to)}</td>
                 <td><span class="tag-plain">${escapeHtml(it.rule)}</span></td>
+                <td class="col-actions">
+                  <div class="row-actions">
+                    <button class="row-btn" data-action="reveal" data-path="${escapeHtml(it.from)}" title="在资源管理器中定位">${icon('folder-open', 13)}</button>
+                  </div>
+                </td>
               </tr>`).join('')}
           </tbody>
         </table>

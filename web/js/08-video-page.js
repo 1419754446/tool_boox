@@ -215,7 +215,7 @@ function renderVideoRow(item, vs) {
         <div class="row-actions">
           <button class="row-btn" data-video-action="preview" data-path="${path}" title="内置预览播放">${icon('play', 13)}</button>
           <button class="row-btn" data-video-action="open" data-path="${path}" title="用系统播放器打开">${icon('external', 13)}</button>
-          <button class="row-btn" data-video-action="reveal" data-path="${path}" title="在资源管理器中定位">${icon('search', 13)}</button>
+          <button class="row-btn" data-video-action="reveal" data-path="${path}" title="在资源管理器中定位">${icon('folder-open', 13)}</button>
           <button class="row-btn danger" data-video-action="delete" data-path="${path}" title="移到回收站">${icon('trash', 13)}</button>
         </div>
       </td>
