@@ -33,6 +33,12 @@
 
 #include "json.h"
 
+// 版本号只有一处真相：工程根的 version.txt，构建时由 build.ps1 生成 version.h。
+// __has_include 让没跑构建、只用编辑器打开源码时也能编译，值取上一次构建的结果。
+#if __has_include("version.h")
+#include "version.h"
+#endif
+
 using Microsoft::WRL::ComPtr;
 
 namespace {
@@ -126,7 +132,10 @@ constexpr wchar_t kShotsHost[] = L"shots.local";
 #ifndef WDA_EXCLUDEFROMCAPTURE
 #define WDA_EXCLUDEFROMCAPTURE 0x00000011
 #endif
-constexpr wchar_t kAppVersion[] = L"0.4.0";
+#ifndef TB_VERSION_STRING
+#define TB_VERSION_STRING L"0.4.0"
+#endif
+constexpr wchar_t kAppVersion[] = TB_VERSION_STRING;
 constexpr int kIdWebView2Loader = 100;
 constexpr int kIdAppHtml = 101;
 

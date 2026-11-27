@@ -4497,9 +4497,13 @@ function handleKillDone(payload) {
 
 function updateAppInfoUI() {
   const version = $('#about-version');
+  const navVersion = document.querySelector('.nav-version');
   const webview = $('#about-webview');
   const dataDir = $('#about-datadir');
   if (version) version.textContent = `v${state.appInfo.version}`;
+  // 侧栏版本不再写死在 index.html，原生上报什么就显示什么，
+  // 这样 version.txt 升级后不会出现"侧栏还是旧版本"的错位。
+  if (navVersion) navVersion.textContent = `v${state.appInfo.version}`;
   if (webview) {
     webview.textContent = state.appInfo.webview;
     webview.title = state.appInfo.webview;

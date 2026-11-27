@@ -29,6 +29,28 @@ $out = Join-Path $root 'build'
 $dist = Join-Path $root 'dist'
 New-Item -ItemType Directory -Force -Path $out, $dist | Out-Null
 
+# 0. One version, one file. version.txt is the only place a release number is
+# written; headers for both the C++ side and the resource compiler are generated
+# here so exe properties and the in-app version can never drift apart.
+$versionFile = Join-Path $root 'version.txt'
+if (-not (Test-Path $versionFile)) { throw 'version.txt is missing' }
+$version = (Get-Content $versionFile -Raw).Trim()
+if ($version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+$') {
+    throw "version.txt must look like 0.4.0, got '$version'"
+}
+$verParts = @($version.Split('.')) + '0'
+$verNum = ($verParts[0..3] -join ',')
+$utf8 = New-Object System.Text.UTF8Encoding($false)
+[IO.File]::WriteAllText((Join-Path $out 'version.h'), @"
+#pragma once
+#define TB_VERSION_STRING L"$version"
+"@, $utf8)
+[IO.File]::WriteAllText((Join-Path $out 'version_rc.h'), @"
+#define TB_VER_NUM $verNum
+#define TB_VERSION_STR "$version"
+"@, $utf8)
+Write-Host "Version: $version ($verNum)"
+
 # 1. Build one self-contained HTML document from the maintained sources.
 $html = Get-Content (Join-Path $root 'web\index.html') -Raw -Encoding UTF8
 $css = Get-Content (Join-Path $root 'web\styles.css') -Raw -Encoding UTF8
@@ -41,7 +63,7 @@ $inlinePath = Join-Path $out 'embedded-index.html'
 # 2. App manifest, icon, version info.
 Push-Location (Join-Path $root 'resources')
 try {
-    & $windres --codepage=65001 app.rc -O coff -o (Join-Path $out 'app.res')
+    & $windres --codepage=65001 "--include-dir=$out" app.rc -O coff -o (Join-Path $out 'app.res')
     if ($LASTEXITCODE -ne 0) { throw 'windres app.rc failed' }
 } finally {
     Pop-Location
@@ -70,6 +92,7 @@ $arguments = @(
     '-finput-charset=UTF-8',
     '-municode', '-mwindows',
     '-Isrc',
+    "-I$out",
     '-Ithird_party/webview2/build/native/include'
 ) + $src + @(
     (Join-Path $out 'app.res'),
@@ -98,10 +121,7 @@ Remove-Item (Join-Path $out 'web') -Recurse -Force -ErrorAction SilentlyContinue
 
 # 5.2 Repackage only the actual deliverables. Never glob the whole dist
 # directory: test screenshots and debug logs have leaked into releases before.
-$version = '0.1.0'
-$versionMatch = Select-String -Path (Join-Path $root 'src\app.cpp') `
-    -Pattern 'kAppVersion\[\]\s*=\s*L"([0-9.]+)"' | Select-Object -First 1
-if ($versionMatch) { $version = $versionMatch.Matches[0].Groups[1].Value }
+# $version comes from version.txt near the top of this script.
 
 Get-ChildItem $dist -Filter 'Toolbox-*-win64.zip' -File |
     Remove-Item -Force -ErrorAction SilentlyContinue

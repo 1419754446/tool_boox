@@ -1,11 +1,15 @@
 #include <windows.h>
 
+// 版本号来自工程根的 version.txt，build.ps1 生成 version_rc.h 并用 -Ibuild 让
+// windres 找到它；这里不再手写数字，避免 exe 属性与程序内版本号对不上。
+#include "version_rc.h"
+
 1 RT_MANIFEST "app.manifest"
 1 ICON "app.ico"
 
 1 VERSIONINFO
-FILEVERSION 0,4,0,0
-PRODUCTVERSION 0,4,0,0
+FILEVERSION TB_VER_NUM
+PRODUCTVERSION TB_VER_NUM
 FILEOS 0x40004
 FILETYPE 0x1
 BEGIN
@@ -15,11 +19,11 @@ BEGIN
     BEGIN
       VALUE "CompanyName", "Toolbox"
       VALUE "FileDescription", "Toolbox - Windows utility launcher"
-      VALUE "FileVersion", "0.4.0"
+      VALUE "FileVersion", TB_VERSION_STR
       VALUE "InternalName", "Toolbox"
       VALUE "OriginalFilename", "Toolbox.exe"
       VALUE "ProductName", "Toolbox"
-      VALUE "ProductVersion", "0.4.0"
+      VALUE "ProductVersion", TB_VERSION_STR
     END
   END
   BLOCK "VarFileInfo"
