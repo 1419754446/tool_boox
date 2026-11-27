@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- The UI is fully self-contained; no remote content is loaded. Keep the
+       policy permissive only for the inlined app bundle, and deny network
+       access so a compromised page cannot exfiltrate local file contents. -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; style-src 'unsafe-inline'; img-src data: blob: https://shots.local; media-src https://media.local blob:; font-src data:; worker-src blob:; connect-src 'none'; base-uri 'none'; form-action 'none';"> 
+
+
+  <title>工具箱</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div class="brand-text">
+          <div class="brand-name">工具箱</div>
+          <div class="brand-sub">WINDOWS TOOLBOX</div>
+        </div>
+      </div>
+
+      <nav class="nav" aria-label="工具分类">
+        <button class="nav-item" data-nav="home" data-category="all">
+          <span class="nav-icon" data-icon="grid"></span>
+          <span class="nav-label">全部工具</span>
+          <span class="nav-count" id="count-all">0</span>
+        </button>
+        <div class="nav-label-row">分类</div>
+        <button class="nav-item" data-nav="home" data-category="file">
+          <span class="nav-icon" data-icon="folder"></span>
+          <span class="nav-label">文件管理</span>
+          <span class="nav-count" id="count-file">0</span>
+        </button>
+        <button class="nav-item" data-nav="home" data-category="disk">
+          <span class="nav-icon" data-icon="drive"></span>
+          <span class="nav-label">磁盘空间</span>
+          <span class="nav-count" id="count-disk">0</span>
+        </button>
+        <button class="nav-item" data-nav="home" data-category="system">
+          <span class="nav-icon" data-icon="cpu"></span>
+          <span class="nav-label">系统效率</span>
+          <span class="nav-count" id="count-system">0</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-spacer"></div>
+
+      <div class="sidebar-card">
+        <div class="sidebar-card-head">
+          <span class="live-dot"></span>
+          <span>本地运行</span>
+        </div>
+        <p>所有扫描与文件操作都在你的电脑上完成，不上传任何数据。</p>
+      </div>
+
+      <button class="nav-item nav-settings" data-nav="settings">
+        <span class="nav-icon" data-icon="settings"></span>
+        <span class="nav-label">设置</span>
+        <span class="nav-version">v0.4</span>
+      </button>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="crumbs">
+          <span class="crumb-root">工具库</span>
+          <span class="crumb-sep">/</span>
+          <span class="crumb-current" id="crumb-current">全部工具</span>
+        </div>
+
+        <label class="search" id="search-box">
+          <span class="search-icon" data-icon="search"></span>
+          <input id="search-input" type="text" placeholder="搜索工具、功能..." autocomplete="off" spellcheck="false" aria-label="搜索工具">
+          <kbd>Ctrl K</kbd>
+        </label>
+
+        <div class="top-actions">
+          <button class="icon-btn" id="theme-btn" title="切换主题" aria-label="切换主题">
+            <span data-icon="sun" class="theme-icon theme-icon-sun"></span>
+            <span data-icon="moon" class="theme-icon theme-icon-moon"></span>
+          </button>
+          <button class="icon-btn" id="help-btn" title="快捷键（F1）" aria-label="快捷键帮助">
+            <span data-icon="keyboard"></span>
+          </button>
+          <button class="icon-btn" data-nav="settings" title="设置" aria-label="设置">
+            <span data-icon="settings"></span>
+          </button>
+        </div>
+      </header>
+
+      <div id="view" class="view" role="main"></div>
+    </main>
+  </div>
+
+  <div id="toast-root" class="toast-root" aria-live="polite"></div>
+  <div id="modal-root"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
