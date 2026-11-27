@@ -80,7 +80,12 @@ Write-Host "Version: $version ($verNum)"
 # 1. Build one self-contained HTML document from the maintained sources.
 $html = Get-Content (Join-Path $root 'web\index.html') -Raw -Encoding UTF8
 $css = Get-Content (Join-Path $root 'web\styles.css') -Raw -Encoding UTF8
-$js = Get-Content (Join-Path $root 'web\app.js') -Raw -Encoding UTF8
+# 前端按 web\js\NN-*.js 的顺序拼接：文件名前缀决定顺序，拆开写只为可读。
+# 产物仍是单文件内联 HTML，运行时不多发一个请求。
+$jsParts = Get-ChildItem (Join-Path $root 'web\js') -Filter '*.js' | Sort-Object Name
+if ($jsParts.Count -eq 0) { throw 'web\js has no script parts' }
+$js = ($jsParts | ForEach-Object { Get-Content $_.FullName -Raw -Encoding UTF8 }) -join "`n"
+
 $inline = $html.Replace('<link rel="stylesheet" href="styles.css">', "<style>`n$css`n</style>")
 $inline = $inline.Replace('<script src="app.js"></script>', "<script>`n$js`n</script>")
 $inlinePath = Join-Path $out 'embedded-index.html'

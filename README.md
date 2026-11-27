@@ -197,7 +197,9 @@ src/tools/tool_folders.cpp  常用文件夹
 src/tools/tool_video.cpp    视频整理命令层（缩略图/时长/预览/撤销）
 src/tools/video/            视频扫描/去重/复制引擎
 src/tools/drives.*          磁盘枚举：fs.drives 命令、全盘扫描的根目录集合
-web/app.js                  工具清单、页面、消息分发
+src/tools/drive_roots.cpp   只做"哪些盘算固定盘"的枚举（给扫描器和测试用）
+web/js/*.js                 工具清单、页面、消息分发（按 01..08 前缀顺序拼接）
+tests/scan_tests.cpp        扫描/空目录/重复查找的回归断言（build.ps1 -Test）
 docs/技术路线.md            路线选择、扩展方式、加新工具四步
 docs/功能对照.md            三套原版与本版的逐项差异
 ```
@@ -206,8 +208,10 @@ docs/功能对照.md            三套原版与本版的逐项差异
 
 1. 新命令模块：`Bridge::Get().Add("xxx.yyy", handler)`，在 `bridge.cpp` 的
    `RegisterAllCommands()` 注册。
-2. `web/app.js` 的 `TOOLS` 加一条，`renderToolPageBody()` 加一个分支，页面里用
-   `toolCall('xxx.yyy', args)` 调后端。
+2. `web/js/` 里找个合适的块（`01-core.js` 放基础设施、扫描类看 `04-scan-pages.js`），
+   把 `TOOLS` 加一条、`renderToolPageBody()` 加一个分支，页面里用
+   `toolCall('xxx.yyy', args)` 调后端。文件名前缀决定拼接顺序，新增块请按前缀插到
+   正确位置，别用 `99-` 之外的新前缀乱序。
 3. 页面照常用 `pageHead()`，会自动获得「悬浮」按钮；托盘「悬浮工具箱」也会自动收录。
 4. 重新构建，仍然是单个 exe。
 
